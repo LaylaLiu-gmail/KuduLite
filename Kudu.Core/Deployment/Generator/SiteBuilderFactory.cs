@@ -79,6 +79,17 @@ namespace Kudu.Core.Deployment.Generator
             tracer.Trace($"===========settings.RunFromLocalZip() { settings.RunFromLocalZip()}");
             tracer.Trace($"===========settings.DoBuildDuringDeployment() { settings.DoBuildDuringDeployment()}");
 
+            tracer.Trace($"===========start");
+            foreach (var sp in settings.SettingsProviders)
+            {
+                var kvs = sp.GetValues();
+                foreach (var kv in kvs)
+                {
+                    tracer.Trace($"==========={kv.Key} {kv.Value}");
+                }
+            }
+            tracer.Trace($"===========end");
+
             string enableOryxBuild = System.Environment.GetEnvironmentVariable("ENABLE_ORYX_BUILD");
 
             tracer.Trace($"===========enableOryxBuild {enableOryxBuild}");
