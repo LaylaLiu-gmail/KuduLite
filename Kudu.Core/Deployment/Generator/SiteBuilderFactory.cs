@@ -82,11 +82,13 @@ namespace Kudu.Core.Deployment.Generator
             tracer.Trace($"===========start");
             foreach (var sp in settings.SettingsProviders)
             {
+                tracer.Trace($"==========={sp.GetType().ToString()}");
                 var kvs = sp.GetValues();
                 foreach (var kv in kvs)
                 {
                     tracer.Trace($"==========={kv.Key} {kv.Value}");
                 }
+                tracer.Trace($"==========={sp.GetType().ToString()} End");
             }
             tracer.Trace($"===========end");
 
