@@ -169,5 +169,9 @@ namespace Kudu
         public const string ArtifactStagingDirectoryName = "extracted";
 
         public const string K8SEAppTypeDefault = "functionapp,kubernetes,linux";
+
+        public const string IsBuildJob = "IS_BUILD_JOB";
+        public const string DefaultDnsSuffix = "DEFAULT_DNS_SUFFIX";
+        public const string PodDeploymentName = "POD_DEPLOYMENT_NAME";
     }
 }

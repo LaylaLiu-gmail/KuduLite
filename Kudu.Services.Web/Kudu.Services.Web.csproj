@@ -62,12 +62,21 @@
     <Exec Command="dotnet publish ..\Kudu.Console --configuration Release -o $(PublishDir)\KuduConsole" Condition="'$(Configuration)' == 'Release' AND '$(OS)' == 'Windows_NT'" />
     <Exec Command="dotnet publish ../Kudu.Console --configuration Release -o $(PublishDir)/KuduConsole" Condition="'$(Configuration)' == 'Release' AND '$(OS)' != 'Windows_NT'" />
   </Target>
+    <Target Name="BuildKuduBuildJob" AfterTargets="Build">
+    <Message Text="%0a%0aBuilding KuduBuildJob%0a" Importance="high" />
+    <Exec Command="dotnet build ../Kudu.BuildJob -o $(MSBuildProjectDirectory)/$(PublishDir)..\KuduBuildJob" Condition="'$(Configuration)' == 'Debug' AND '$(OS)' == 'Windows_NT'" />
+    <Exec Command="dotnet build ../Kudu.BuildJob -o $(OutputPath)/KuduBuildJob" Condition="'$(Configuration)' == 'Debug' AND '$(OS)' != 'Windows_NT'" />
+    <Exec Command="dotnet publish ..\Kudu.BuildJob --configuration Release -o $(PublishDir)\KuduBuildJob" Condition="'$(Configuration)' == 'Release' AND '$(OS)' == 'Windows_NT'" />
+    <Exec Command="dotnet publish ../Kudu.BuildJob --configuration Release -o $(PublishDir)/KuduBuildJob" Condition="'$(Configuration)' == 'Release' AND '$(OS)' != 'Windows_NT'" />
+  </Target>
   <Target Name="ChangeScriptPermissionsForLinux" AfterTargets="publish">
     <Message Text="%0a%0aSetting Permissions for Kudu Script(s)%0a" Importance="high" />
     <Exec Command="chmod -R +x $(PublishDir)/KuduConsole" Condition=" '$(OS)' != 'Windows_NT' AND '$(Configuration)' == 'Release'" />
+    <Exec Command="chmod -R +x $(PublishDir)/KuduBuildJob" Condition=" '$(OS)' != 'Windows_NT' AND '$(Configuration)' == 'Release'" />
     <Exec Command="chmod -R +x $(PublishDir)/node_modules" Condition=" '$(OS)' != 'Windows_NT' AND '$(Configuration)' == 'Release'" />
     <Exec Command="chmod -R +x $(PublishDir)/Scripts" Condition=" '$(OS)' != 'Windows_NT' AND '$(Configuration)' == 'Release'" />
     <Exec Command="chmod -R +x $(OutputPath)/KuduConsole" Condition=" '$(OS)' != 'Windows_NT' AND '$(Configuration)' == 'Debug'" />
+    <Exec Command="chmod -R +x $(OutputPath)/KuduBuildJob" Condition=" '$(OS)' != 'Windows_NT' AND '$(Configuration)' == 'Debug'" />
     <Exec Command="chmod -R +x $(OutputPath)/node_modules" Condition=" '$(OS)' != 'Windows_NT' AND '$(Configuration)' == 'Debug'" />
     <Exec Command="chmod -R +x $(OutputPath)/Scripts" Condition=" '$(OS)' != 'Windows_NT' AND '$(Configuration)' == 'Debug'" />
   </Target>

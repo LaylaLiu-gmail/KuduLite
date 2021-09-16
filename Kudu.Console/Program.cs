@@ -26,6 +26,10 @@ using k8s;
 using IRepository = Kudu.Core.SourceControl.IRepository;
 using log4net;
 using log4net.Config;
+using k8s.Models;
+using System.Linq;
+using System.Text;
+using Kudu.Core.K8SE;
 
 namespace Kudu.Console
 {
@@ -36,6 +40,72 @@ namespace Kudu.Console
         private static string appRoot;
 
         private static int Main(string[] args)
+        {
+            var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
+            XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
+            // Turn flag on in app.config to wait for debugger on launch
+            if (ConfigurationManager.AppSettings["WaitForDebuggerOnStart"] == "true")
+            {
+                while (!Debugger.IsAttached)
+                {
+                    System.Threading.Thread.Sleep(100);
+                }
+            }
+
+            if (System.Environment.GetEnvironmentVariable(SettingsKeys.DisableDeploymentOnPush) == "1")
+            {
+                return 0;
+            }
+
+            if (args.Length < 2)
+            {
+                System.Console.WriteLine("Usage: kudu.exe appRoot wapTargets [deployer]");
+                return 1;
+            }
+
+            // The post receive hook launches the exe from sh and intereprets newline differently.
+            // This fixes very wacky issues with how the output shows up in the console on push
+            System.Console.Error.NewLine = "\n";
+            System.Console.Out.NewLine = "\n";
+
+            appRoot = args[0];
+            string wapTargets = args[1];
+            string deployer = args.Length == 2 ? null : args[2];
+            string requestId = System.Environment.GetEnvironmentVariable(Constants.RequestIdHeader);
+            var dict = System.Environment.GetEnvironmentVariables();
+            foreach (var envkey in dict.Keys)
+            {
+                System.Console.WriteLine(envkey.ToString() + ":" + dict[envkey].ToString());
+            }
+            System.Console.WriteLine("========================================================================");
+
+            env = GetEnvironment(appRoot, requestId);
+            ISettings settings = new XmlSettings.Settings(GetSettingsPath(env));
+            settingsManager = new DeploymentSettingsManager(settings);
+
+            // Setup the trace
+            TraceLevel level = settingsManager.GetTraceLevel();
+            ITracer tracer = GetTracer(env, level);
+            ITraceFactory traceFactory = new TracerFactory(() => tracer);
+
+            // Calculate the lock path
+            string lockPath = Path.Combine(env.SiteRootPath, Constants.LockPath);
+            string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
+
+            IOperationLock deploymentLock = DeploymentLockFile.GetInstance(deploymentLockPath, traceFactory);
+
+            dict = System.Environment.GetEnvironmentVariables();
+            var process = Process.GetCurrentProcess();
+            System.Console.WriteLine(process.ProcessName);
+            foreach (var envkey in dict.Keys)
+            {
+                System.Console.WriteLine(envkey.ToString() + ":" +dict[envkey].ToString());
+            }
+
+            return PerformDeploy2(appRoot, wapTargets, deployer, lockPath, env, settingsManager, level, tracer, traceFactory, deploymentLock);
+        }
+
+        private static int oldMain(string[] args)
         {
             var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
             XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
@@ -104,6 +174,203 @@ namespace Kudu.Console
             }
         }
 
+        private static int PerformDeploy2(
+            string appRoot,
+            string wapTargets,
+            string deployer,
+            string lockPath,
+            IEnvironment env,
+            IDeploymentSettingsManager settingsManager,
+            TraceLevel level,
+            ITracer tracer,
+            ITraceFactory traceFactory,
+            IOperationLock deploymentLock)
+        {
+            System.Environment.SetEnvironmentVariable("GIT_DIR", null, System.EnvironmentVariableTarget.Process);
+
+            // Skip SSL Certificate Validate
+            if (System.Environment.GetEnvironmentVariable(SettingsKeys.SkipSslValidation) == "1")
+            {
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            }
+
+            // Adjust repo path
+            env.RepositoryPath = Path.Combine(env.SiteRootPath, settingsManager.GetRepositoryPath());
+            string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
+            string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
+
+            IOperationLock statusLock = new LockFile(statusLockPath, traceFactory);
+
+            IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();
+
+            ISiteBuilderFactory builderFactory = new SiteBuilderFactory(buildPropertyProvider, env, null);
+            var logger = new ConsoleLogger(); IOperationLock hooksLock = new LockFile(hooksLockPath, traceFactory);
+
+            IRepository gitRepository;
+            if (settingsManager.UseLibGit2SharpRepository())
+            {
+                gitRepository = new LibGit2SharpRepository(env, settingsManager, traceFactory);
+                System.Console.WriteLine("LibGit2");
+            }
+            else
+            {
+                gitRepository = new GitExeRepository(env, settingsManager, traceFactory);
+                System.Console.WriteLine("Git");
+            }
+
+            env.CurrId = gitRepository.GetChangeSet(settingsManager.GetBranch()).Id;
+
+            IServerConfiguration serverConfiguration = new ServerConfiguration();
+
+            IAnalytics analytics = new Analytics(settingsManager, serverConfiguration, traceFactory);
+
+            IWebHooksManager hooksManager = new WebHooksManager(tracer, env, hooksLock);
+
+            IDeploymentStatusManager deploymentStatusManager = new DeploymentStatusManager(env, analytics, statusLock);
+            //PackageArtifactFromFolder(env, settingsManager, tracer, GetLogger(env, level, logger), "artificial");
+
+            var step = tracer.Step(XmlTracer.ExecutingExternalProcessTrace, new Dictionary<string, string>
+            {
+                { "type", "process" },
+                { "path", "kudu.exe" },
+                { "arguments", appRoot + " " + wapTargets }
+            });
+
+            using (step)
+            {
+                try
+                {
+
+                    var config = KubernetesClientConfiguration.BuildDefaultConfig();
+                    IKubernetes client = new Kubernetes(config);
+                    tracer.Trace("Starting Request!");
+
+                    var secrets = client.ListNamespacedSecret("appservice-ns").Items;
+                    var appSettings = secrets.FirstOrDefault(s => s.Metadata.Name == env.K8SEAppName);
+                    string gitUri = null;
+                    string customConfigMapName = K8SEDeploymentHelper.GetCustomConfigMap(env.K8SEAppName);
+                    tracer.Trace(customConfigMapName);
+                    var parts = customConfigMapName.Split("/");
+                    tracer.Trace(parts.Length.ToString());
+                    tracer.Trace(parts[0]);
+                    tracer.Trace(parts[1]);
+                    var customConfigMaps = client.ListNamespacedConfigMap(parts[0]).Items;
+                    foreach (var m in customConfigMaps)
+                    {
+                        tracer.Trace(m.Metadata.Name);
+                        tracer.Trace((m.Metadata.Name == parts[1].Trim()).ToString());
+                    }
+                    //var customConfigMap = customConfigMaps.FirstOrDefault(c => c.Metadata.Name == parts[1].Trim());
+                    var customConfigMap = customConfigMaps.FirstOrDefault(c => c.Metadata.Name == parts[1].Trim());
+                    if (appSettings != null && appSettings.Data.ContainsKey("password") && appSettings.Data.ContainsKey("user") && customConfigMap.Data.ContainsKey("DEFAULT_DNS_SUFFIX"))
+                    {
+                        var dnsName = customConfigMap.Data["DEFAULT_DNS_SUFFIX"];
+                        //gitUri = $"https://%24layliunode14:19698240-cf9c-4794-8b82-f2538f158d2a@layliunode14.scm.layliueuapkube-7jpod2sie.centraluseuap.k4apps.io/layliunode14.git"
+                        gitUri = string.Format("https://{0}:{1}@{2}/{3}.git", Encoding.UTF8.GetString(appSettings.Data["user"]).Replace("$", "%24"), Encoding.UTF8.GetString(appSettings.Data["password"]),
+                            $"{env.K8SEAppName}.scm.{dnsName}", env.K8SEAppName);
+
+                        tracer.Trace(dnsName);
+                        tracer.Trace(gitUri);
+                    }
+                    else
+                    {
+                        //TODO: Need to fallback to the existing kudu service which has only one build service support.
+                        throw new Exception("Throw exception or handle some existing cases");
+                    }
+
+                    string buildJobPodName = Guid.NewGuid().ToString()[..4];
+                    string podDeploymentName = System.Environment.GetEnvironmentVariable(Constants.PodDeploymentName);
+
+                    var pod = client.CreateNamespacedPod(
+                        new V1Pod()
+                        {
+                            Metadata = new V1ObjectMeta { Name = "build-job-" + buildJobPodName },
+                            Spec = new V1PodSpec
+                            {
+                                RestartPolicy = "Never",
+                                Containers = new[]
+                                {
+                                    new V1Container()
+                                    {
+                                        Name = "container",
+                                        Image = "layliuregistry.azurecr.io/build-job:v6",
+                                        Command = new List<string>() { "/bin/sh", "-c" },
+                                        Args = new List<string>(){ $"cd /opt/Kudu; mkdir -p {appRoot}; dotnet ./KuduBuildJob/Kudu.BuildJob.dll {appRoot} {gitUri} 2> {appRoot}/err.log; sleep 1200s" },
+                                        Env = new List<V1EnvVar>
+                                        {
+                                            new V1EnvVar
+                                            {
+                                                Name = "SYSTEM_NAMESPACE",
+                                                ValueFrom = new V1EnvVarSource{  FieldRef = new V1ObjectFieldSelector{  ApiVersion = "v1", FieldPath = "metadata.namespace"} }
+                                            },
+                                            new V1EnvVar
+                                            {
+                                                Name = "POD_NAME",
+                                                ValueFrom = new V1EnvVarSource{  FieldRef = new V1ObjectFieldSelector{  ApiVersion = "v1", FieldPath = "metadata.name"} }
+                                            },
+                                            new V1EnvVar
+                                            {
+                                                Name = "POD_NAMESPACE",
+                                                ValueFrom = new V1EnvVarSource{  FieldRef = new V1ObjectFieldSelector{  ApiVersion = "v1", FieldPath = "metadata.namespace"} }
+                                            },
+                                            new V1EnvVar
+                                            {
+                                                Name = "POD_DEPLOYMENT_NAME",
+                                                Value = "layliueuapkube-k8se-build-job"
+                                            },
+                                            new V1EnvVar
+                                            {
+                                                Name = "IS_BUILD_JOB",
+                                                Value = "true"
+                                            }
+                                        },
+                                        EnvFrom = new List<V1EnvFromSource>
+                                        {
+                                            new V1EnvFromSource(){ ConfigMapRef = new V1ConfigMapEnvSource(){ Name = podDeploymentName} },
+                                            new V1EnvFromSource(){ SecretRef = new V1SecretEnvSource(){ Name = env.K8SEAppName} },
+                                            new V1EnvFromSource(){ ConfigMapRef = new V1ConfigMapEnvSource(){ Name = customConfigMap.Metadata.Name} }
+                                        },
+                                        ImagePullPolicy = "Always"
+                                    },
+                                },
+                                ServiceAccountName = podDeploymentName
+                            },
+                        },
+                    "appservice-ns");
+
+                    //var pod = Yaml.LoadFromString<V1Pod>(podYaml);
+                }
+                catch (Exception e)
+                {
+                    tracer.TraceError(e);
+                    return 1;
+                }
+            }
+
+            tracer.Step("Perform deploy exiting successfully");
+            return 0;
+        }
+
+        private static string PackageArtifactFromFolder(IEnvironment environment, IDeploymentSettingsManager settings, ITracer tracer
+            , ILogger logger, string artifactFilename)
+        {
+            tracer.Trace("Writing the artifacts to a squashfs file");
+            string file = Path.Combine(environment.DeploymentsPath, artifactFilename);
+            ExternalCommandFactory commandFactory = new ExternalCommandFactory(environment, settings, env.RepositoryPath);
+            Executable exe = commandFactory.BuildExternalCommandExecutable(environment.RepositoryPath, environment.DeploymentsPath, logger);
+            try
+            {
+                exe.ExecuteWithProgressWriter(logger, tracer, $"mksquashfs . {file} -noappend");
+            }
+            catch (Exception)
+            {
+                logger.LogError();
+                throw;
+            }
+
+            return file;
+        }
+
         private static int PerformDeploy(
             string appRoot,
             string wapTargets,
@@ -129,10 +396,10 @@ namespace Kudu.Console
             string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
             string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
 
-            
+
             IOperationLock statusLock = new LockFile(statusLockPath, traceFactory);
             IOperationLock hooksLock = new LockFile(hooksLockPath, traceFactory);
-            
+
             IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();
             ISiteBuilderFactory builderFactory = new SiteBuilderFactory(buildPropertyProvider, env, null);
             var logger = new ConsoleLogger();
@@ -212,10 +479,10 @@ namespace Kudu.Console
                     return 1;
                 }
                 finally
-                { 
-                    System.Console.WriteLine("Deployment Logs : '"+
-                    env.AppBaseUrlPrefix+ "/newui/jsonviewer?view_url=/api/deployments/" + 
-                    gitRepository.GetChangeSet(settingsManager.GetBranch()).Id+"/log'");
+                {
+                    System.Console.WriteLine("Deployment Logs : '" +
+                    env.AppBaseUrlPrefix + "/newui/jsonviewer?view_url=/api/deployments/" +
+                    gitRepository.GetChangeSet(settingsManager.GetBranch()).Id + "/log'");
                 }
             }
 
@@ -287,7 +554,7 @@ namespace Kudu.Console
                 // so changed to Assembly.GetEntryAssembly().Location
                 binPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             }
-
+            System.Console.WriteLine($"BUILDJOB====== binPath {binPath}");
             // CORE TODO Handing in a null IHttpContextAccessor (and KuduConsoleFullPath) again
             var env=  new Kudu.Core.Environment(root,
                 EnvironmentHelper.NormalizeBinPath(binPath),
@@ -296,6 +563,7 @@ namespace Kudu.Console
                 Path.Combine(AppContext.BaseDirectory, "KuduConsole", "kudu.dll"),
                 null,
                 appName);
+            System.Console.WriteLine($"BUILDJOB====== scriptPath {env.ScriptPath}");
             return env;
         }
     }

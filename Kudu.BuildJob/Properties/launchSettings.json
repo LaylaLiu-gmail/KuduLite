@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Kudu.BuildJob": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\layliu\\apps\\layliunode14\\site https://%24layliunode14:19698240-cf9c-4794-8b82-f2538f158d2a@layliunode14.scm.layliueuapkube-7jpod2sie.centraluseuap.k4apps.io/layliunode14.git\"",
+      "workingDirectory": "D:\\Repository\\kuduLite\\Kudu.BuildJob\\bin\\Debug\\netcoreapp3.1"
+    }
+  }
+}

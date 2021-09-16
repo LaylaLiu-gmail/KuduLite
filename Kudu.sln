@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27004.2006
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31613.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kudu.Contracts", "Kudu.Contracts\Kudu.Contracts.csproj", "{0DAEEE18-6016-4C38-B9CD-9261C6336486}"
 EndProject
@@ -20,6 +20,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kudu.Tests", "Kudu.Tests\Ku
 	ProjectSection(ProjectDependencies) = postProject
 		{0DAEEE18-6016-4C38-B9CD-9261C6336486} = {0DAEEE18-6016-4C38-B9CD-9261C6336486}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.BuildJob", "Kudu.BuildJob\Kudu.BuildJob.csproj", "{A96C7C9B-C9A5-4EC7-B7CD-DC4718C8EF84}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,6 +58,10 @@ Global
 		{C667BB81-BD51-4009-9555-1BC7462855B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C667BB81-BD51-4009-9555-1BC7462855B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C667BB81-BD51-4009-9555-1BC7462855B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A96C7C9B-C9A5-4EC7-B7CD-DC4718C8EF84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A96C7C9B-C9A5-4EC7-B7CD-DC4718C8EF84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A96C7C9B-C9A5-4EC7-B7CD-DC4718C8EF84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A96C7C9B-C9A5-4EC7-B7CD-DC4718C8EF84}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
