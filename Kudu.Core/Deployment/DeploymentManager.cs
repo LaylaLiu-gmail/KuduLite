@@ -304,8 +304,8 @@ namespace Kudu.Core.Deployment
 
                         if (K8SEDeploymentHelper.IsBuildJob())
                         {
-                            var userName = System.Environment.GetEnvironmentVariable("user");
-                            var password = System.Environment.GetEnvironmentVariable("password");
+                            var userName = System.Environment.GetEnvironmentVariable(Constants.User);
+                            var password = System.Environment.GetEnvironmentVariable(Constants.Password);
                             var dnsSuffix = System.Environment.GetEnvironmentVariable(Constants.DefaultDnsSuffix);
 
                             ArtifactUploadHelper artifactUploadHelper = new ArtifactUploadHelper(appName, userName, password, dnsSuffix, changeSet.Id);

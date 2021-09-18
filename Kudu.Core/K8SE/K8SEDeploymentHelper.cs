@@ -264,5 +264,11 @@ namespace Kudu.Core.K8SE
             var vaule = System.Environment.GetEnvironmentVariable(Constants.IsBuildJob);
             return StringUtils.IsTrueLike(vaule);
         }
+
+        public static bool UseBuildJob()
+        {
+            var vaule = System.Environment.GetEnvironmentVariable(Constants.UseBuildJob);
+            return StringUtils.IsTrueLike(vaule);
+        }
     }
 }

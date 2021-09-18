@@ -260,7 +260,7 @@ namespace Kudu.BuildJob
                 binPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             }
 
-            System.Console.WriteLine($"binPath ${binPath}");
+            System.Console.WriteLine($"=============binPath {binPath}");
            
             // CORE TODO Handing in a null IHttpContextAccessor (and KuduConsoleFullPath) again
             var env = new Kudu.Core.Environment(root,
@@ -270,7 +270,7 @@ namespace Kudu.BuildJob
                 Path.Combine(AppContext.BaseDirectory, "KuduConsole", "kudu.dll"),
                 null,
                 appName);
-            System.Console.WriteLine($"scriptPath ${env.ScriptPath}");
+            System.Console.WriteLine($"==================scriptPath {env.ScriptPath}");
             return env;
         }
     }
