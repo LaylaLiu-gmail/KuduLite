@@ -245,123 +245,145 @@ var Utilities = (function () {
     return Utilities;
 })();
 
-var Process = (function () {
-    var webSiteSku;
-    function Process(json) {
+var Instance = (function () {
+    function Instance(json) {
         this._json = json;
-        this._json.threads = Utilities.getArrayFromJson(json.threads, function (t) {
-            return new Thread(t);
-        });
-        this._json.modules = Utilities.getArrayFromJson(json.modules, function (m) {
-            return new Module(m);
-        });
-        this._json.open_file_handles = Utilities.getArrayFromJson(json.open_file_handles, function (h) {
-            return new Handle(h);
-        });
-
-        this._json.environment_variables = Utilities.getArrayFromJsonObject(json.environment_variables, function (key, value) {
-            if (key === "WEBSITE_SKU") {
-                webSiteSku = value;
-            }
-
-            return new EnvironmentVariable(key, value);
-        });
     }
-    Object.defineProperty(Process.prototype, "Id", {
-        get: function () {
-            return this._json.id;
-        },
-        enumerable: true,
-        configurable: true
-    });
 
-    Object.defineProperty(Process.prototype, "Name", {
+    Object.defineProperty(Instance.prototype, "Name", {
         get: function () {
             return this._json.name;
         },
-        enumerable: true,
+        enumerable: false,
         configurable: true
     });
 
-    Object.defineProperty(Process.prototype, "FileHandles", {
+    Object.defineProperty(Instance.prototype, "IpAddress", {
         get: function () {
-            return this._json.open_file_handles;
+            return this._json.ipAddress;
+        },
+        enumerable: false,
+        configurable: true
+    });
+
+    Object.defineProperty(Instance.prototype, "HostIpAddress", {
+        get: function () {
+            return this._json.hostIpAddress;
+        },
+        enumerable: false,
+        configurable: true
+    });
+
+    Object.defineProperty(Instance.prototype, "NodeName", {
+        get: function () {
+            return this._json.nodeName;
+        },
+        enumerable: false,
+        configurable: true
+    });
+
+    Object.defineProperty(Instance.prototype, "StartTime", {
+        get: function () {
+            return this._json.startTime;
+        },
+        enumerable: false,
+        configurable: true
+    });
+
+    Instance.prototype.tableRow = function () {
+        var tr = document.createElement('tr');
+        tr.className = 'collapsable hoverable';
+
+        tr.appendChild(Utilities.ToTd(this.Name));
+        tr.appendChild(Utilities.ToTd(this.IpAddress));
+        tr.appendChild(Utilities.ToTd(this.HostIpAddress));
+        tr.appendChild(Utilities.ToTd(this.NodeName));
+        tr.appendChild(Utilities.ToTd(this.StartTime));
+
+        var link = document.createElement('a');
+        link.textContent = "View Processes"
+        link.href = `javascript:processExplorerSetupAsync('${this.Name}');`;
+        tr.appendChild(Utilities.ToTd(link));
+
+        return $(tr);
+    };
+
+    return Instance;
+})();
+
+var Process = (function () {
+    function Process(json) {
+        this._json = json;
+        this._json.href = `api/processes/${json.pid}`;
+    }
+
+    Object.defineProperty(Process.prototype, "Id", {
+        get: function () {
+            return this._json.pid;
         },
         enumerable: true,
         configurable: true
     });
 
-    Object.defineProperty(Process.prototype, "Minidump", {
+    Object.defineProperty(Process.prototype, "User", {
         get: function () {
-            return this._json.minidump;
+            return this._json.user;
         },
         enumerable: true,
         configurable: true
     });
 
-    Object.defineProperty(Process.prototype, "ChildrenIds", {
+    Object.defineProperty(Process.prototype, "PID", {
         get: function () {
-            var childrenIds = [];
-            var child;
-            for (child in this._json.children) {
-                childrenIds.push(Process.getIdFromHref(child));
-            }
-            return childrenIds;
+            return this._json.pid;
         },
         enumerable: true,
         configurable: true
     });
 
-    Object.defineProperty(Process.prototype, "ParentId", {
+    Object.defineProperty(Process.prototype, "CPU", {
         get: function () {
-            return Process.getIdFromHref(this._json.parent);
+            return this._json.cpu;
         },
         enumerable: true,
         configurable: true
     });
 
-    Object.defineProperty(Process.prototype, "TotalCpuTime", {
+    Object.defineProperty(Process.prototype, "Memory", {
         get: function () {
-            if (!this._json.total_cpu_time) {
-                return "  ?";
-            }
-            // ts format is [-][d.]hh:mm:ss[.fffffff]
-            var total = 0;
-            var parts = this._json.total_cpu_time.split(":");
-            var hrs = parts[0].split(".");
-            if (hrs.length > 1) {
-                total += parseInt(hrs[0]) * 24 * 60 * 60;
-                total += parseInt(hrs[1]) * 60 * 60;
-            } else {
-                total += parseInt(hrs[0]) * 60 * 60;
-            }
-            total += parseInt(parts[1]) * 60;
-            total += parseInt(parts[2]);
-            if (total !== 0) {
-                return "  " + total.toString() + " s";
-            } else {
-                return "<1 s";
-            }
+            return this._json.memory;
         },
         enumerable: true,
         configurable: true
     });
 
-    Object.defineProperty(Process.prototype, "UserName", {
+    Object.defineProperty(Process.prototype, "TTY", {
         get: function () {
-            if (!this._json.user_name) {
-                return "  ?";
-            }
-            var parts = this._json.user_name.split("\\");
-            return parts[1];
+            return this._json.tty;
         },
         enumerable: true,
         configurable: true
     });
 
-    Object.defineProperty(Process.prototype, "WebSiteSku", {
+    Object.defineProperty(Process.prototype, "Start", {
         get: function () {
-            return webSiteSku;
+            return this._json.start;
+        },
+        enumerable: true,
+        configurable: true
+    });
+
+    Object.defineProperty(Process.prototype, "Time", {
+        get: function () {
+            return this._json.time;
+        },
+        enumerable: true,
+        configurable: true
+    });
+
+    Object.defineProperty(Process.prototype, "Command", {
+        get: function () {
+            return this._json.command;
         },
         enumerable: true,
         configurable: true
@@ -371,60 +393,16 @@ var Process = (function () {
         var _this = this;
         var tr = document.createElement('tr');
         tr.setAttribute('data-depth', level.toString());
-        tr.className = 'collapsable hoverable';
+        tr.className = 'collapsable hoverable refersh';
 
-        var td = document.createElement('td');
-        td.style.paddingLeft = (level === 0 ? 5 : level * 30) + 'px';
-        var suffix = "";
-        if (this._json.is_webjob) {
-            suffix = " <span class='label label-info'>webjob</span>";
-        } else if (this._json.is_scm_site) {
-            suffix = " <span class='label label-primary'>scm</span>";
-        }
-        if (this._json.children.length > 0) {
-            $(td).wrapInner('<span class="toggle"></span>    ' + this.FullName + suffix);
-        } else {
-            $(td).wrapInner(this.FullName + suffix);
-        }
-        tr.appendChild(td);
-        tr.appendChild(Utilities.ToTd(this._json.id));
-        tr.appendChild(Utilities.ToTd(this.UserName));
-        tr.appendChild(Utilities.ToTd(this.TotalCpuTime));
-        tr.appendChild(Utilities.ToTd(Utilities.commaSeparateNumber(this._json.working_set / 1024) + " KB"));
-        tr.appendChild(Utilities.ToTd(Utilities.commaSeparateNumber(this._json.private_memory / 1024) + " KB"));
-        tr.appendChild(Utilities.ToTd(Utilities.commaSeparateNumber(this._json.thread_count)));
-        tr.appendChild(Utilities.ToTd(Utilities.getButton("btn btn-info", this._json.id + "-properties", "Properties..", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            _this.dialog().dialog("open");
-            $("li").blur();
-        }, false)));
-
-        var profilingButton = Utilities.getButton("btn btn-info", this._json.id + "-Profiling", this._json.is_profile_running ? "Stop Profiling" : "Start Profiling", function (e) {
-            handleProfilingEvents(e, _this._json.id, _this._json.iis_profile_timeout_in_seconds);
-        }, false);
-        $(profilingButton).css("width", "138px");
-
-        var iisProfilingCheckbox = Utilities.getCheckbox(this._json.id + "-iisProfilingCheck", "Collect IIS Events", this._json.is_profile_running, this._json.is_iis_profile_running)
-
-        if (this._json.is_profile_running) { // highlight button if the profiler has started
-            $(profilingButton).addClass("btn-danger");
-        }
-
-        if (Process.prototype.WebSiteSku === "Free" || Process.prototype.WebSiteSku === "Shared" || Process.prototype.WebSiteSku === "Dynamic") {
-            $(profilingButton).css("opacity", "0.5");
-            $(profilingButton).off("click");
-            $(profilingButton).attr("title", "Profiling is not supported for Free/Shared sites or Function apps in consumption plan.");
-            $(profilingButton).tooltip().show();
-
-            var iisProfilingCheckboxControl = iisProfilingCheckbox.childNodes.item(this._json.id + "-iisProfilingCheck");
-            if (iisProfilingCheckboxControl != null) {
-                iisProfilingCheckboxControl.disabled = 'disabled';
-            }
-        }
-
-        tr.appendChild(Utilities.ToTd(iisProfilingCheckbox));
-        tr.appendChild(Utilities.ToTd(profilingButton));
+        tr.appendChild(Utilities.ToTd(this.User));
+        tr.appendChild(Utilities.ToTd(this.PID));
+        tr.appendChild(Utilities.ToTd(this.CPU));
+        tr.appendChild(Utilities.ToTd(this.Memory));
+        tr.appendChild(Utilities.ToTd(this.TTY));
+        tr.appendChild(Utilities.ToTd(this.Start));
+        tr.appendChild(Utilities.ToTd(this.Time));
+        tr.appendChild(Utilities.ToTd(this.Command));
 
         return $(tr);
     };
@@ -549,8 +527,9 @@ var Process = (function () {
     };
 
     Process.prototype.kill = function () {
+        var instanceName = $("#instanceName").text();
         return $.ajax({
-            url: this._json.href,
+            url: `${this._json.href}?instanceName=${instanceName}`,
             type: "DELETE"
         });
     };
@@ -559,158 +538,6 @@ var Process = (function () {
         return parseInt(href.substr(href.lastIndexOf("/") + 1));
     };
     return Process;
-})();
-
-var Thread = (function () {
-    function Thread(json) {
-        this._json = json;
-    }
-    Thread.prototype.dialog = function () {
-        if ($("#" + this._json.id.toString() + "-thread").length > 0) {
-            return $("#" + this._json.id.toString() + "-thread");
-        }
-
-        var div = document.createElement("div");
-        div.id = this._json.id.toString() + "-thread";
-        div.setAttribute("title", "Thread " + this._json.id + " Properties");
-
-        this.getInfo().appendTo(div);
-
-        return Utilities.makeDialog($(div), 400);
-    };
-
-    Thread.prototype.tableCells = function () {
-        var _this = this;
-        return [
-            this._json.id.toString(), this._json.state, Utilities.getButton("ui-button-info", this._json.id.toString() + "-more", "More...", function () {
-                _this.dialog().dialog("open");
-            })];
-    };
-
-    Thread.prototype.updateSelf = function () {
-        var _this = this;
-        return $.getJSON(this._json.href, function (response) {
-            _this._json = response;
-        });
-    };
-
-    Thread.prototype.getInfo = function () {
-        var _this = this;
-        var div = document.createElement("div");
-        div.id = this._json.id.toString() + "-info-tab";
-        this.updateSelf().done(function () {
-            div.appendChild(Utilities.toRow("id", _this._json.id));
-            div.appendChild(Utilities.toRow("start address", _this._json.start_address));
-            div.appendChild(Utilities.toRow("current priority", _this._json.current_priority));
-            div.appendChild(Utilities.toRow("priority_level", _this._json.priority_level));
-            div.appendChild(Utilities.toRow("base_priority", _this._json.base_priority));
-            div.appendChild(Utilities.toRow("start time", _this._json.start_time));
-            div.appendChild(Utilities.toRow("total processor time", _this._json.total_processor_time));
-            div.appendChild(Utilities.toRow("user processor time", _this._json.user_processor_time));
-            div.appendChild(Utilities.toRow("priviledged processor time", _this._json.priviledged_processor_time));
-            div.appendChild(Utilities.toRow("state", _this._json.state));
-            div.appendChild(Utilities.toRow("wait reason", _this._json.wait_reason));
-        }).fail(function () {
-            div.appendChild(Utilities.errorDiv("Couldn't retrive thread details"));
-        });
-
-        return $(div);
-    };
-    return Thread;
-})();
-
-var Module = (function () {
-    function Module(json) {
-        this._json = json;
-    }
-    Module.prototype.updateSelf = function () {
-        var _this = this;
-        return $.getJSON(this._json.href, function (response) {
-            _this._json = response;
-        });
-    };
-
-    Module.prototype.tableCells = function () {
-        var _this = this;
-        return [
-            "<strong>" + this._json.file_name + "</strong>", this._json.file_version, Utilities.getButton("ui-button-info", this._json.base_address.toString() + "-more", "More...", function () {
-                _this.dialog().dialog("open");
-            })];
-    };
-
-    Module.prototype.dialog = function () {
-        if ($("#" + this._json.base_address.toString() + "-module").length > 0) {
-            return $("#" + this._json.base_address.toString() + "-module");
-        }
-
-        var div = document.createElement("div");
-        div.id = this._json.base_address.toString() + "-module";
-        div.setAttribute("title", "module at " + this._json.base_address + " Properties");
-
-        this.getInfo().appendTo(div);
-
-        return Utilities.makeDialog($(div), 400);
-    };
-
-    Module.prototype.getInfo = function () {
-        var _this = this;
-        var div = document.createElement("div");
-        div.id = this._json.base_address.toString() + "-module-info-tab";
-        this.updateSelf().done(function () {
-            div.appendChild(Utilities.toRow("base address", _this._json.base_address));
-            div.appendChild(Utilities.toRow("file name", _this._json.file_name));
-            div.appendChild(Utilities.toRow("file path", _this._json.file_path));
-            div.appendChild(Utilities.toRow("module memory size", _this._json.module_memory_size));
-            div.appendChild(Utilities.toRow("file version", _this._json.file_version));
-            div.appendChild(Utilities.toRow("file description", _this._json.file_description));
-            div.appendChild(Utilities.toRow("product", _this._json.product));
-            div.appendChild(Utilities.toRow("product version", _this._json.product_version));
-            div.appendChild(Utilities.toRow("is debug", _this._json.is_debug));
-            div.appendChild(Utilities.toRow("language", _this._json.language));
-        }).fail(function () {
-            div.appendChild(Utilities.errorDiv("Couldn't retrive module details"));
-        });
-
-        return $(div);
-    };
-    return Module;
-})();
-
-var Handle = (function () {
-    function Handle(fileName) {
-        this.file_name = fileName;
-    }
-    Handle.prototype.dialog = function () {
-        throw "Not Implemented";
-    };
-
-    Handle.prototype.tableCells = function () {
-        return [this.file_name];
-    };
-
-    Handle.prototype.updateSelf = function () {
-        throw "Not Implemented";
-    };
-    return Handle;
-})();
-
-var EnvironmentVariable = (function () {
-    function EnvironmentVariable(key, value) {
-        this.key = key;
-        this.value = value;
-    }
-    EnvironmentVariable.prototype.dialog = function () {
-        throw "Not Implemented";
-    };
-
-    EnvironmentVariable.prototype.tableCells = function () {
-        return [this.key, this.value];
-    };
-
-    EnvironmentVariable.prototype.updateSelf = function () {
-        throw "Not Implemented";
-    };
-    return EnvironmentVariable;
 })();
 
 var Tree = (function () {
@@ -736,8 +563,8 @@ var Tree = (function () {
         for (var i = 0; i < this.roots.length; i++) {
             Tree.addChildren(this.roots[i], nodeList);
         }
-        $(".collapsable").remove();
-        $(".expandable").remove();
+        //$(".collapsable").remove();
+        //$(".expandable").remove();
         for (var i = 0; i < this.roots.length; i++) {
             Tree.printTreeTable(this.roots[i], 0, $("#proctable"));
         }
@@ -758,13 +585,7 @@ var Tree = (function () {
 
     Tree.addChildren = function (node, nodeList) {
         for (var i = 0; i < nodeList.length; i++) {
-            if (nodeList[i].process.ParentId === node.process.Id) {
-                node.children.push(nodeList[i]);
-            }
-        }
-
-        for (var i = 0; i < node.children.length; i++) {
-            Tree.addChildren(node.children[i], nodeList);
+            node.children.push(nodeList[i]);
         }
     };
 
@@ -773,7 +594,9 @@ var Tree = (function () {
         jcurrent.data("proc", node.process).appendTo(tableRoot);
         node.process.HTMLElement = jcurrent;
         for (var i = 0; i < node.children.length; i++) {
-            Tree.printTreeTable(node.children[i], level + 1, tableRoot);
+            if (node.children[i].process.Id !== node.process.Id) {
+                Tree.printTreeTable(node.children[i], level + 1, tableRoot);
+            }
         }
     };
 
@@ -817,33 +640,51 @@ var ProcessNode = (function () {
 
 var nodeList;
 
-function processExplorerSetupAsync() {
-    $("#proc-loading").show();
+function processExplorerSetupAsync(instanceName) {
     var processTree = new Tree();
     nodeList = [];
-    var deferred = [];
-    $.getJSON(appRoot + "api/processes", function (data) {
-        var ids = $.map(data, function (item, index) {
-            return item.id;
-        });
+    $(".refersh").remove();
+
+    if (instanceName) {
+        $("#instanceName").text(instanceName);
+    }
+    else {
+        // refresh
+        $("#proc-loading").show();
+        instanceName = $("#instanceName").text();
+    }
+
+    $.getJSON(`api/processes?instanceName=${instanceName}`, function (data) {
         for (var i = 0; i < data.length; i++) {
-            deferred.push($.getJSON(data[i].href, function (response) {
-                var p = new Process(response);
-                var processNode = new ProcessNode(p);
-                if (p.ParentId === -1 || $.inArray(p.ParentId, ids) < 0) {
-                    processTree.roots.push(processNode);
-                }
-                nodeList.push(new ProcessNode(p));
-            }));
+            var p = new Process(data[i]);
+            var processNode = new ProcessNode(p);
+            if (i === 0) {
+                processTree.roots.push(processNode);
+            }
+
+            nodeList.push(new ProcessNode(p));
         }
-    }).done(function () {
-        return $.whenAll.apply($, deferred).then(function () {
-            return processTree.buildTree(nodeList);
-        }, function () {
-            return processTree.buildTree(nodeList);
-        }).always(function () {
-            return $("#proc-loading").hide();
-        });
+
+        processTree.buildTree(nodeList);
+        $("#proc-loading").hide();
+    });
+}
+
+function getInstancesAsync() {
+    $("#proc-loading").show();
+    $.getJSON("api/instances", function (data) {
+        var defaultInstanceName = "";
+        for (var i = 0; i < data.length; i++) {
+            var instance = new Instance(data[i]);
+            if (i === 0) {
+                defaultInstanceName = instance.Name;
+            }
+
+            var jcurrent = instance.tableRow();
+            jcurrent.appendTo($("#instancetable"));
+        }
+
+        processExplorerSetupAsync(defaultInstanceName);
     });
 }
 
@@ -899,9 +740,9 @@ function overrideRightClickMenu() {
                     $(this).removeClass("hoverable");
                     $(this).addClass("dying");
                     process.kill().done(function () {
-                        return processExplorerSetupAsync();
+                        return processExplorerSetupAsync(null);
                     }).fail(function () {
-                        return processExplorerSetupAsync();
+                        return processExplorerSetupAsync(null);
                     });
                     break;
                 case "dump1":
@@ -960,99 +801,6 @@ function searchForHandle() {
     }
 }
 
-function handleProfilingEvents(e, processId, iisProfilingTimeoutInSeconds) {
-    if (!e || !e.target || typeof e.target.textContent === "undefined") {
-        return;
-    }
-
-    var iisProfiling = false;
-
-    var iisProfilingCheckbox = document.getElementById(processId + "-iisProfilingCheck");
-
-    if (iisProfilingCheckbox != null) {
-        iisProfiling = iisProfilingCheckbox.checked;
-    }
-
-    if (e.target.textContent.indexOf("Stop") === 0) {
-        stopProfiling(e, processId);
-        if (iisProfilingCheckbox != null) {
-            iisProfilingCheckbox.disabled = "";
-        }
-    }
-    else if (e.target.textContent.indexOf("Starting") !== 0) {
-        if (iisProfiling) {
-            var divConfirm = document.getElementById('dialog-confirm')
-            if (divConfirm == null) {
-                divConfirm = Utilities.createDiv('dialog-confirm');
-                divConfirm.title = "Collect IIS Events?";
-
-            }
-            divConfirm.innerHTML = "IIS profiling enables IIS and threadTime ETW events. The generated trace file can be analyzed using Perfview which is available at <a style='outline: none' href='https://www.microsoft.com/en-us/download/details.aspx?id=28567'>https://www.microsoft.com/en-us/download/details.aspx?id=28567</a>. <br/><br/>The profiling session will automatically timeout after <b>" + iisProfilingTimeoutInSeconds.toString() + "</b> seconds if not stopped manually.<br/><br/>Enabling IIS Profiling is a relatively <b>expensive option</b> to turn on as it increases the CPU usage and disk I/O on your instance. Are you sure you want to continue?"
-            $(divConfirm).dialog({
-                resizable: false,
-                height: 330,
-                width: 450,
-                modal: true,
-                buttons: [{
-                    text: "Yes",
-                    click: function () {
-                        if (iisProfilingCheckbox != null) {
-                            iisProfilingCheckbox.disabled = "disabled";
-                        }
-                        e.target.textContent = "Starting Profiler...";
-                        startProfiling(e, processId, iisProfiling);
-                        $(this).dialog("close");
-                    }
-                }, {
-                    text: "No",
-                    click: function () {
-                        $(this).dialog("close");
-                    }
-                }]
-            });
-        }
-        else {
-
-            // so this is when someone wants to collect profiler traces
-            // without the IIS profiling events. We still want to
-            // disable the profiling check box here
-
-            if (iisProfilingCheckbox != null) {
-                iisProfilingCheckbox.disabled = "disabled";
-            }
-            e.target.textContent = "Starting Profiler...";
-            startProfiling(e, processId, iisProfiling);
-        }
-    }
-}
-
-function postProfileRequest(action, processId, iisProfiling) {
-    var uri = "/api/processes/" + processId + "/profile/" + action;
-
-    if (iisProfiling)
-        uri = uri + "?iisProfiling=true";
-
-    var request = {
-        method: "POST",
-        contentType: "application/json",
-    };
-    return $.ajax(uri, request);
-}
-
-function startProfiling(e, processId, iisProfiling) {
-    var request = postProfileRequest("start", processId, iisProfiling);
-    request.done(function (resp) {
-        e.target.title = "";
-        e.target.textContent = "Stop Profiling";
-        $(e.currentTarget).addClass("btn-danger");  // highlight button if the profiler has started
-    });
-    request.fail(function (resp) {
-        var obj = JSON.parse(resp.responseText);
-        alert(obj["Message"]);
-        e.target.textContent = "Start Profiling";
-    });
-}
-
 function showModal(title, content) {
 
     if (!$("#generalModal").hasClass('ui-dialog-content')) { //check if already init-ed
@@ -1078,23 +826,6 @@ function showModal(title, content) {
     $('#generalModal').dialog('option', 'title', title);
     $("#generalModal .content").text(content);
     $("#generalModal").dialog("open");
-}
-
-function stopProfiling(e, processId) {
-    var uri = window.location.protocol + "//" + window.location.host + "/api/processes/" + processId + "/profile/stop";
-    showModal("Generating diagnostics...", "The profiler is now generating your report. This could take a couple of minutes after which you will be prompted with a download.");
-
-    Utilities.downloadURL(uri, true);
-    e.target.textContent = "Start Profiling";
-    e.target.title = "It may take a few seconds for the download profile dialog to appear";
-
-    $(e.currentTarget).removeClass("btn-danger");  // remove highlight button if the profiler has stopped
-
-    var iisProfilingCheckbox = document.getElementById(processId + "-iisProfilingCheck");
-    if (iisProfilingCheckbox != null) {
-        iisProfilingCheckbox.disabled = "";
-        iisProfilingCheckbox.checked = false;
-    }
 }
 
 window.onload = function () {
@@ -1159,7 +890,7 @@ window.onload = function () {
         }
     });
 
-    processExplorerSetupAsync();
+    getInstancesAsync();
     enableCollabsableNodes();
     overrideRightClickMenu();
 };

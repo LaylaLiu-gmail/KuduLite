@@ -16,7 +16,20 @@
     <div class="spinner">
         <img id="proc-loading" class="paKman" src="../Content/Images/paKman.gif" title="Please wait" style="display: none" />
     </div>
-    <button id="find-file-handle">Search Process</button>
+    @*<button id="find-file-handle">Search Process</button>*@
+    <table id="instancetable" class="table table-bordered table-condensed">
+        <tr>
+            <th style="width: 13%">Instance Name</th>
+            <th style="width: 5%">IP Address</th>
+            <th style="width: 7%">Host IP Address</th>
+            <th style="width: 7%">Node Name</th>
+            <th style="width: 7%">Start Time</th>
+            <th style="width: 7%">Change Instance</th>
+        </tr>
+    </table>
+
+    <h4 style="text-align: center">Processes for instance: <span id="instanceName"></span></h4>
+
     <div style="text-align: right"><a id="SwitchConsoleLink" href="javascript:processExplorerSetupAsync();">Refresh</a></div>
     <table id="proctable" class="table table-bordered table-condensed">
         <tr>
@@ -25,19 +38,9 @@
             <th style="width: 7%">CPU</th>
             <th style="width: 7%">Memory</th>
             <th style="width: 7%">TTY</th>
-            <th style="width: 6%">StartDate</th>
-            <th style="width: 4%">StartTime</th>
+            <th style="width: 6%">Start</th>
+            <th style="width: 4%">Time</th>
             <th style="width: 7%">Command</th>
-        </tr>
-        <tr>
-            <td>Test</td>
-            <td>Test</td>
-            <td>Test</td>
-            <td>Test</td>
-            <td>Test</td>
-            <td>Test</td>
-            <td>Test</td>
-            <td>Test</td>
         </tr>
     </table>
 </div>

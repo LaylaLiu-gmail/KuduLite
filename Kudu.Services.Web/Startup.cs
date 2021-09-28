@@ -570,15 +570,20 @@ namespace Kudu.Services.Web
 
                 string processControllerName = "Process";
 
+                // Instances
+                routes.MapRoute("all-instances", "api/instances",
+                    new { controller = "Instance", action = "GetAllInstances" },
+                    new { verb = new HttpMethodRouteConstraint("GET") });
+
                 // Processes
                 routes.MapHttpProcessesRoute("all-processes", "",
-                    new {controller = processControllerName, action = "GetAllProcesses"},
+                    new {controller = processControllerName, action = "GetAllProcesses" },
                     new {verb = new HttpMethodRouteConstraint("GET")});
                 routes.MapHttpProcessesRoute("one-process-get", "/{id}",
                     new {controller = processControllerName, action = "GetProcess"},
                     new {verb = new HttpMethodRouteConstraint("GET")});
                 routes.MapHttpProcessesRoute("one-process-delete", "/{id}",
-                    new {controller = processControllerName, action = "KillProcess"},
+                    new {controller = processControllerName, action = "KillProcess" },
                     new {verb = new HttpMethodRouteConstraint("DELETE")});
                 routes.MapHttpProcessesRoute("one-process-dump", "/{id}/dump",
                     new {controller = processControllerName, action = "MiniDump"},
