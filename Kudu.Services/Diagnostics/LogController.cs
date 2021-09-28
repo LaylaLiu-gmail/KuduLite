@@ -38,6 +38,7 @@ namespace Kudu.Services.Diagnostics
             
             foreach (var file in logFiles)
             {
+                Console.WriteLine($"Found file: {file}");
                 if (file.Contains("envoy"))
                 {
                     httpLogFile = file.Substring(7, file.Length - 11);
@@ -80,6 +81,7 @@ namespace Kudu.Services.Diagnostics
             {
                 if (file.Contains(appName))
                 {
+                    Console.WriteLine($"Found file: {file}");
                     if (file.Contains("http"))
                     {
                         logFile = file.Substring(7, file.Length - 11);
@@ -103,8 +105,9 @@ namespace Kudu.Services.Diagnostics
             using var k8seClient = new K8SEClient();
             /*
             appNamespace = "appservice-ns";
-            appName = "zuh3-site";
+            
             logProcessorName = "zuharc-eastus-appservice-extension-k8se-log-processor";*/
+            appName = "zuh3-site";
             var pods = k8seClient.GetPodsForDeamonSet(appNamespace, logProcessorName);
             if (pods == null || pods.Count == 0)
             {
@@ -122,6 +125,7 @@ namespace Kudu.Services.Diagnostics
 
             foreach (var file in logFiles)
             {
+                Console.WriteLine($"Found file: {file}");
                 if (file.Contains("app-init"))
                 {
                     if (file.Contains(appName))
@@ -129,7 +133,6 @@ namespace Kudu.Services.Diagnostics
                         logFile = file.Substring(7, file.Length - 11);
                         break;
                     }
-
                 }
             }
 

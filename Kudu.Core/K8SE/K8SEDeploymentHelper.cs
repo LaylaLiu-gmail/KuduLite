@@ -161,36 +161,39 @@ namespace Kudu.Core.K8SE
 
         public static string GetAppName(HttpContext context)
         {
-            var appName = context.Request.Headers["K8SE_APP_NAME"].ToString();
-
+            var appName = context.Request.Headers["k8se_app_name"].ToString();
+            if (string.IsNullOrEmpty(appName))
+            {
+                appName = "lima";
+            }
             if (string.IsNullOrEmpty(appName))
             {
                 context.Response.StatusCode = 401;
                 // K8SE TODO: move this to resource map
                 throw new InvalidOperationException("Couldn't recognize AppName");
             }
+            Console.WriteLine($"Get App name: {appName}");
             return appName;
         }
 
         public static string GetExtensionName(HttpContext context)
         {
-            var extensionName = "";
+            var extensionName = "zuh3-appservice-extension-k8se-build-service";
 
-            //try
-            //{
-            extensionName = System.Environment.GetEnvironmentVariable("POD_DEPLOYMENT_NAME").ToString();
-            Console.WriteLine($"Extension name: {extensionName}");
-            /*
+            try
+            {
+                extensionName = System.Environment.GetEnvironmentVariable("POD_DEPLOYMENT_NAME").ToString();
             }
             catch (Exception)
             {
-               
-                extensionName = "zuh3-appservice-extension-k8se-build-service";
-            }*/
+                Console.WriteLine($"Not found env var POD_DEPLOYMENT_NAME. Default to {extensionName}");
+            }
             List<string> elements = extensionName.Split('-').ToList();
             var extensionElements = elements.GetRange(0, elements.Count - 2);
 
-            return String.Join("-", extensionElements); ;
+            extensionName = String.Join("-", extensionElements);
+            Console.WriteLine($"Extension name: {extensionName}");
+            return extensionName;
         }
 
         public static string GetAppKind(HttpContext context)
@@ -210,7 +213,15 @@ namespace Kudu.Core.K8SE
 
         public static string GetAppNamespace(HttpContext context)
         {
-            var appNamepace = System.Environment.GetEnvironmentVariable("K8SE_APPS_NAMESPACE").ToString();
+            var appNamepace = "appservice-ns";
+            try
+            {
+                appNamepace = System.Environment.GetEnvironmentVariable("K8SE_APPS_NAMESPACE").ToString();
+            }
+            catch (Exception)
+            {
+                Console.WriteLine($"Not found Env variable K8SE_APPS_NAMESPACE. Default to {appNamepace}.");
+            }
             return appNamepace;
         }
 
