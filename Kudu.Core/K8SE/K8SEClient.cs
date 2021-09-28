@@ -51,7 +51,7 @@ namespace Kudu.Core.K8SE
 
             labelSelector = labelSelector.Substring(0, labelSelector.Length - 1);
             var pods = kubernetesClient.ListNamespacedPod(namespaceName, labelSelector: labelSelector);
-
+            Console.WriteLine($"List pods in namespace {namespaceName} with label selector {labelSelector}");
 
             return pods.Items.Select(pod => new PodInstance()
             {
@@ -77,6 +77,7 @@ namespace Kudu.Core.K8SE
 
         public async Task<string> GetPodFileAsync(string namespaceName, string podName, string fileName)
         {
+            Console.WriteLine($"Start reading log file {fileName} in pod {podName} within namespace {namespaceName}");
             var command = new List<string>()
             {
                 "cat",
