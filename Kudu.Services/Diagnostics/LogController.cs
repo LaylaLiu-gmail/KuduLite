@@ -3,6 +3,7 @@ using Kudu.Core.K8SE;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
 namespace Kudu.Services.Diagnostics
 {
@@ -88,6 +89,7 @@ namespace Kudu.Services.Diagnostics
             }
 
             var result = await k8seClient.GetPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/" + logFile);
+
             return Ok(result);
         }
 
@@ -99,10 +101,10 @@ namespace Kudu.Services.Diagnostics
             var extensionName = K8SEDeploymentHelper.GetExtensionName(HttpContext);
             var logProcessorName = extensionName + "-log-processor"; // log processor pod name
             using var k8seClient = new K8SEClient();
-            
-            //appNamespace = "appservice-ns";
-            //appName = "zuh3-site";
-            
+            /*
+            appNamespace = "appservice-ns";
+            appName = "zuh3-site";
+            logProcessorName = "zuharc-eastus-appservice-extension-k8se-log-processor";*/
             var pods = k8seClient.GetPodsForDeamonSet(appNamespace, logProcessorName);
             if (pods == null || pods.Count == 0)
             {
