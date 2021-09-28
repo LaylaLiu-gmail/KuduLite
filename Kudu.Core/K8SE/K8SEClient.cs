@@ -41,7 +41,7 @@ namespace Kudu.Core.K8SE
 
         public List<PodInstance> GetPodsForDeamonSet(string namespaceName, string deamonSetName)
         {
-            Console.WriteLine($"Read Deamonset ${deamonSetName} in namespace ${namespaceName}");
+            Console.WriteLine($"Read Deamonset {deamonSetName} in namespace {namespaceName}");
             var deamonSet = kubernetesClient.ReadNamespacedDaemonSet(deamonSetName, namespaceName);
             var labelSelector = string.Empty;
             foreach (var item in deamonSet.Spec.Selector.MatchLabels)
