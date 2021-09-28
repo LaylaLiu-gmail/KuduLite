@@ -39,6 +39,30 @@ namespace Kudu.Core.K8SE
             }).ToList();
         }
 
+        public List<PodInstance> GetPodsForDeamonSet(string namespaceName, string deamonSetName)
+        {
+            Console.WriteLine($"Read Deamonset ${deamonSetName} in namespace ${namespaceName}");
+            var deamonSet = kubernetesClient.ReadNamespacedDaemonSet(deamonSetName, namespaceName);
+            var labelSelector = string.Empty;
+            foreach (var item in deamonSet.Spec.Selector.MatchLabels)
+            {
+                labelSelector = labelSelector + item.Key + "=" + item.Value + ",";
+            }
+
+            labelSelector = labelSelector.Substring(0, labelSelector.Length - 1);
+            var pods = kubernetesClient.ListNamespacedPod(namespaceName, labelSelector: labelSelector);
+
+
+            return pods.Items.Select(pod => new PodInstance()
+            {
+                Name = pod.Metadata.Name,
+                NodeName = pod.Spec.NodeName,
+                IpAddress = pod.Status.PodIP,
+                HostIpAddress = pod.Status.HostIP,
+                StartTime = pod.Status.StartTime.ToString()
+            }).ToList();
+        }
+
         public async Task<string> GetPodAllProcessAsync(string namespaceName, string podName)
         {
             // For command with params, it should split into command list
