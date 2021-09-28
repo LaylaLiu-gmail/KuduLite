@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using k8s.Models;
 using k8s;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.K8SE
 {
@@ -162,7 +163,10 @@ namespace Kudu.Core.K8SE
         public static string GetAppName(HttpContext context)
         {
             var appName = context.Request.Headers["K8SE_APP_NAME"].ToString();
-
+            if (string.IsNullOrEmpty(appName))
+            {
+                appName = "lima";
+            }
             if (string.IsNullOrEmpty(appName))
             {
                 context.Response.StatusCode = 401;
@@ -171,6 +175,24 @@ namespace Kudu.Core.K8SE
             }
             return appName;
         }
+
+        public static string GetExtensionName(HttpContext context)
+        {
+            var extensionName = "";
+            try
+            {
+                extensionName = System.Environment.GetEnvironmentVariable("POD_DEPLOYMENT_NAME").ToString();
+            }
+            catch (Exception)
+            {
+                extensionName = "zuh3-appservice-extension-k8se-build-service";
+            }
+            List<string> elements = extensionName.Split('-').ToList();
+            var extensionElements = elements.GetRange(0, elements.Count - 2);
+
+            return String.Join("-", extensionElements); ;
+        }
+
 
         public static string GetAppKind(HttpContext context)
         {

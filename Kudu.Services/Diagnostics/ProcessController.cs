@@ -13,8 +13,8 @@ namespace Kudu.Services.Diagnostics
             var appName = K8SEDeploymentHelper.GetAppName(HttpContext);
             using var k8seClient = new K8SEClient();
 
-            // appNamespace = "appservice-ns";
-            // appName = "test2";
+            appNamespace = "appservice-ns";
+            appName = "zuh3-site";
 
             var pods = k8seClient.GetPodsForDeployment(appNamespace, appName);
             if (pods == null || pods.Count == 0)

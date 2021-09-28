@@ -602,6 +602,17 @@ namespace Kudu.Services.Web
                     new {controller = processControllerName, action = "GetModule"},
                     new {verb = new HttpMethodRouteConstraint("GET")});
 
+                // Log Stream
+                routes.MapRoute("httplog", "/api/httplog",
+                    new { controller = "Log", action = "GetHttpLog" },
+                    new { verb = new HttpMethodRouteConstraint("GET") });
+                routes.MapRoute("sitelog", "/api/sitelog",
+                    new { controller = "Log", action = "GetSiteLog" },
+                    new { verb = new HttpMethodRouteConstraint("GET") });
+                routes.MapRoute("appinitlog", "/api/appinitlog",
+                    new { controller = "Log", action = "GetAppInitLog" },
+                    new { verb = new HttpMethodRouteConstraint("GET") });
+
                 // Runtime
                 routes.MapHttpRouteDual("runtime", "diagnostics/runtime",
                     new {controller = "Runtime", action = "GetRuntimeVersions"},
