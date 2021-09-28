@@ -179,14 +179,18 @@ namespace Kudu.Core.K8SE
         public static string GetExtensionName(HttpContext context)
         {
             var extensionName = "";
-            try
-            {
-                extensionName = System.Environment.GetEnvironmentVariable("POD_DEPLOYMENT_NAME").ToString();
+
+            //try
+            //{
+            extensionName = System.Environment.GetEnvironmentVariable("POD_DEPLOYMENT_NAME").ToString();
+            Console.WriteLine($"Extension name: {extensionName}");
+            /*
             }
             catch (Exception)
             {
+               
                 extensionName = "zuh3-appservice-extension-k8se-build-service";
-            }
+            }*/
             List<string> elements = extensionName.Split('-').ToList();
             var extensionElements = elements.GetRange(0, elements.Count - 2);
 
