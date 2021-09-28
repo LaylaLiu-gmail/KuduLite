@@ -99,7 +99,7 @@ namespace Kudu.Services.Diagnostics
             var extensionName = K8SEDeploymentHelper.GetExtensionName(HttpContext);
             var logProcessorName = extensionName + "-log-processor"; // log processor pod name
             using var k8seClient = new K8SEClient();
-
+            
             //appNamespace = "appservice-ns";
             //appName = "zuh3-site";
             
