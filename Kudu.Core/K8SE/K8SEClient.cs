@@ -51,6 +51,17 @@ namespace Kudu.Core.K8SE
             return await ExecuteCommandInPodAsync(namespaceName, podName, command);
         }
 
+        public async Task KillPodProcessAsync(string namespaceName, string podName, string pid)
+        {
+            var command = new List<string>()
+            {
+                "kill",
+                pid
+            };
+
+            await ExecuteCommandInPodAsync(namespaceName, podName, command);
+        }
+
         public async Task<string> GetPodFileAsync(string namespaceName, string podName, string fileName)
         {
             var command = new List<string>()
