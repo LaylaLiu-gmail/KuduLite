@@ -210,7 +210,7 @@ namespace Kudu.Core.K8SE
 
         public static string GetAppNamespace(HttpContext context)
         {
-            var appNamepace = context.Request.Headers["K8SE_APP_NAMESPACE"].ToString();
+            var appNamepace = System.Environment.GetEnvironmentVariable("K8SE_APPS_NAMESPACE").ToString();
             return appNamepace;
         }
 
