@@ -33,20 +33,34 @@ namespace Kudu.Services.Diagnostics
             }
 
             //var logFiles = k8seClient.ListPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/").Result;
-            List<string> logFiles = k8seClient.ListPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/").Result.Split('\n').ToList();
-            var httpLogFile = "";
-            
-            foreach (var file in logFiles)
+            var logFile = "";
+            foreach (var pod in pods)
             {
-                Console.WriteLine($"Found file: {file}");
-                if (file.Contains("envoy"))
+                List<string> logFiles = k8seClient.ListPodFileAsync(appNamespace, pod.Name, "/var/log/containers/").Result.Split('\n').ToList();
+                foreach (var file in logFiles)
                 {
-                    httpLogFile = file.Substring(7, file.Length - 11);
+                    Console.WriteLine($"Found file: {file} in pod ${pod.Name}");
+                    if (file.Contains("envoy"))
+                    {
+                        logFile = file.Substring(7, file.Length - 11);
+                        break;
+                    }
+                }
+                if (!string.IsNullOrEmpty(logFile))
+                {
                     break;
                 }
             }
-            
-            var result = await k8seClient.GetPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/" + httpLogFile);
+
+            var result = "";
+            if (string.IsNullOrEmpty(logFile))
+            {
+                result = "No log file found";
+            }
+            else
+            {
+                result = await k8seClient.GetPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/" + logFile);
+            }
             return Ok(result);
         }
 
@@ -74,23 +88,38 @@ namespace Kudu.Services.Diagnostics
             }
 
             //var logFiles = k8seClient.ListPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/").Result;
-            List<string> logFiles = k8seClient.ListPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/").Result.Split('\n').ToList();
             var logFile = "";
-
-            foreach (var file in logFiles)
+            foreach (var pod in pods)
             {
-                if (file.Contains(appName))
+                List<string> logFiles = k8seClient.ListPodFileAsync(appNamespace, pod.Name, "/var/log/containers/").Result.Split('\n').ToList();
+                foreach (var file in logFiles)
                 {
-                    Console.WriteLine($"Found file: {file}");
-                    if (file.Contains("http"))
+                    Console.WriteLine($"Found file: {file} in pod ${pod.Name}");
+                    if (file.Contains(appName))
                     {
-                        logFile = file.Substring(7, file.Length - 11);
-                        break;
-                    } 
+                        Console.WriteLine($"Found file: {file}");
+                        if (file.Contains("http"))
+                        {
+                            logFile = file.Substring(7, file.Length - 11);
+                            break;
+                        }
+                    }
+                }
+                if (!string.IsNullOrEmpty(logFile))
+                {
+                    break;
                 }
             }
 
-            var result = await k8seClient.GetPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/" + logFile);
+            var result = "";
+            if (string.IsNullOrEmpty(logFile))
+            {
+                result = "No log file found";
+            }
+            else
+            {
+                result = await k8seClient.GetPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/" + logFile);
+            }
 
             return Ok(result);
         }
@@ -120,23 +149,37 @@ namespace Kudu.Services.Diagnostics
             }
 
             //var logFiles = k8seClient.ListPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/").Result;
-            List<string> logFiles = k8seClient.ListPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/").Result.Split('\n').ToList();
             var logFile = "";
-
-            foreach (var file in logFiles)
+            foreach (var pod in pods)
             {
-                Console.WriteLine($"Found file: {file}");
-                if (file.Contains("app-init"))
+                List<string> logFiles = k8seClient.ListPodFileAsync(appNamespace, pod.Name, "/var/log/containers/").Result.Split('\n').ToList();
+                foreach (var file in logFiles)
                 {
-                    if (file.Contains(appName))
+                    Console.WriteLine($"Found file: {file} in pod ${pod.Name}");
+                    if (file.Contains("app-init"))
                     {
-                        logFile = file.Substring(7, file.Length - 11);
-                        break;
+                        if (file.Contains(appName))
+                        {
+                            logFile = file.Substring(7, file.Length - 11);
+                            break;
+                        }
                     }
                 }
+                if (!string.IsNullOrEmpty(logFile))
+                {
+                    break;
+                }
             }
-
-            var result = await k8seClient.GetPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/" + logFile);
+            
+            var result = "";
+            if (string.IsNullOrEmpty(logFile))
+            {
+                result = "No log file found";
+            }
+            else
+            {
+                result = await k8seClient.GetPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/" + logFile);
+            }
             return Ok(result);
         }
     }
