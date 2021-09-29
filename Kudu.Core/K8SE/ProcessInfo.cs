@@ -1,4 +1,4 @@
-﻿namespace Kudu.Services.Models
+﻿namespace Kudu.Core.K8SE
 {
     public class ProcessInfo
     {

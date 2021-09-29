@@ -574,6 +574,9 @@ namespace Kudu.Services.Web
                 routes.MapRoute("all-instances", "api/instances",
                     new { controller = "Instance", action = "GetAllInstances" },
                     new { verb = new HttpMethodRouteConstraint("GET") });
+                routes.MapRoute("restart-instance", "api/instances/{instanceName}/restart",
+                    new { controller = "Instance", action = "RestartInstance" },
+                    new { verb = new HttpMethodRouteConstraint("PUT") });
 
                 // Processes
                 routes.MapHttpProcessesRoute("all-processes", "",

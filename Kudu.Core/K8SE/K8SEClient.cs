@@ -35,7 +35,8 @@ namespace Kudu.Core.K8SE
                 NodeName = pod.Spec.NodeName,
                 IpAddress = pod.Status.PodIP,
                 HostIpAddress = pod.Status.HostIP,
-                StartTime = pod.Status.StartTime.ToString()
+                StartTime = pod.Status.StartTime.ToString(),
+                Status = pod.Status.Phase
             }).ToList();
         }
 
@@ -63,7 +64,7 @@ namespace Kudu.Core.K8SE
             }).ToList();
         }
 
-        public async Task<string> GetPodAllProcessAsync(string namespaceName, string podName)
+        public async Task<List<ProcessInfo>> GetPodAllProcessAsync(string namespaceName, string podName)
         {
             // For command with params, it should split into command list
             var command = new List<string>()
@@ -72,7 +73,8 @@ namespace Kudu.Core.K8SE
                 "-aux"
             };
 
-            return await ExecuteCommandInPodAsync(namespaceName, podName, command);
+            var result = await ExecuteCommandInPodAsync(namespaceName, podName, command);
+            return ParseProcessInfo(result);
         }
 
         public async Task KillPodProcessAsync(string namespaceName, string podName, string pid)
@@ -107,6 +109,46 @@ namespace Kudu.Core.K8SE
             };
 
             return await ExecuteCommandInPodAsync(namespaceName, podName, command);
+        }
+
+        private List<ProcessInfo> ParseProcessInfo(string content)
+        {
+            var processes = new List<ProcessInfo>();
+            var splitLines = content.Split(System.Environment.NewLine);
+            for (int index = 0; index < splitLines.Length; ++index)
+            {
+                if (index == 0 || string.IsNullOrWhiteSpace(splitLines[index]))
+                {
+                    continue;
+                }
+
+                // Default will split by whitespace characters
+                // https://docs.microsoft.com/en-us/dotnet/api/system.string.split?view=net-5.0#remarks
+                var items = splitLines[index].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (items.Length < 11)
+                {
+                    throw new Exception("Parse process info failed: column length should be greater than 11");
+                }
+
+                var command = new string[items.Length - 10];
+                Array.Copy(items, 10, command, 0, command.Length);
+                processes.Add(new ProcessInfo
+                {
+                    User = items[0],
+                    PID = items[1],
+                    CPU = items[2],
+                    Memory = items[3],
+                    VSZ = items[4],
+                    RSS = items[5],
+                    TTY = items[6],
+                    STAT = items[7],
+                    Start = items[8],
+                    Time = items[9],
+                    Command = string.Join(" ", command)
+                });
+            }
+
+            return processes;
         }
 
         private async Task<string> ExecuteCommandInPodAsync(string namespaceName, string podName, IEnumerable<string> command, string containerName = null)

@@ -12,19 +12,20 @@
 }
 
 <div id="main" class="container">
-    <h2 style="text-align: center">Process Explorer</h2>
+    <h2 style="text-align: center">Kubernetes Explorer</h2>
     <div class="spinner">
         <img id="proc-loading" class="paKman" src="../Content/Images/paKman.gif" title="Please wait" style="display: none" />
     </div>
     @*<button id="find-file-handle">Search Process</button>*@
     <table id="instancetable" class="table table-bordered table-condensed">
         <tr>
-            <th style="width: 13%">Instance Name</th>
+            <th style="width: 13%">Pod Name</th>
             <th style="width: 5%">IP Address</th>
+            <th style="width: 5%">Status</th>
             <th style="width: 7%">Host IP Address</th>
             <th style="width: 7%">Node Name</th>
             <th style="width: 7%">Start Time</th>
-            <th style="width: 7%">Change Instance</th>
+            <th style="width: 7%">Actions</th>
         </tr>
     </table>
 

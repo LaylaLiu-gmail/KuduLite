@@ -18,5 +18,8 @@ namespace Kudu.Core.K8SE
 
         [JsonProperty(PropertyName = "startTime")]
         public string StartTime { get; set; }
+
+        [JsonProperty(PropertyName = "status")]
+        public string Status { get; set; }
     }
 }

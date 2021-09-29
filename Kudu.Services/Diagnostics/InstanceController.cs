@@ -13,7 +13,6 @@ namespace Kudu.Services.Diagnostics
             var appName = K8SEDeploymentHelper.GetAppName(HttpContext);
             using var k8seClient = new K8SEClient();
 
-            // appNamespace = "appservice-ns";
             // appName = "test2";
 
             var pods = k8seClient.GetPodsForDeployment(appNamespace, appName);
@@ -23,6 +22,21 @@ namespace Kudu.Services.Diagnostics
             }
 
             return Ok(pods);
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> RestartInstance(string instanceName)
+        {
+            var appNamespace = K8SEDeploymentHelper.GetAppNamespace(HttpContext);
+            using var k8seClient = new K8SEClient();
+
+            var processes = await k8seClient.GetPodAllProcessAsync(appNamespace, instanceName);
+            foreach (var proc in processes)
+            {
+                await k8seClient.KillPodProcessAsync(appNamespace, instanceName, proc.PID);
+            }
+
+            return Ok();
         }
     }
 }

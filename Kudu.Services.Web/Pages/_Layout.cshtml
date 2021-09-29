@@ -66,16 +66,16 @@
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
                     <li><a class="navbar-brand" style="padding-top: 17px" href="~/Env">Environment</a></li>
-                    <li><a class="navbar-brand" style="padding-top: 17px" href="~/instances/any/webssh/host">SSH</a></li>
-                    <li><a class="navbar-brand" style="padding-top: 17px" href="~/ProcessExplorer">Process Explorer</a></li>
+                    <li><a class="navbar-brand" style="padding-top: 17px" href="~/KubernetesExplorer">KubernetesExplorer</a></li>
                     <li class="dropdown">
-                        <a class="navbar-brand" style="padding-top: 17px" href="#" data-toggle="dropdown">Log Stream <b class="caret"></b></a>
+                        <a class="navbar-brand" style="padding-top: 17px" href="#" data-toggle="dropdown">LogStream <b class="caret"></b></a>
                         <ul class="dropdown-menu" >
                             <li><a href="~/api/httplog">HTTP Log</a></li>
                             <li><a href="~/api/sitelog">Site Log</a></li>
                             <li><a href="~/api/appinitlog">AppInit Log</a></li>
                         </ul>
                     </li>
+                    <li><a class="navbar-brand" style="padding-top: 17px" href="~/HealthCheck">HealthCheck</a></li>
                 </ul>
                 @{
                     var email = httpContextAccessor.HttpContext.Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"].ToString();
