@@ -86,6 +86,17 @@ namespace Kudu.Core.K8SE
             await ExecuteCommandInPodAsync(namespaceName, podName, command);
         }
 
+        public async Task<string> ListPodFileAsync(string namespaceName, string podName, string filePath)
+        {
+            var command = new List<string>()
+            {
+                "ls",
+                filePath
+            };
+
+            return await ExecuteCommandInPodAsync(namespaceName, podName, command);
+        }
+
         public async Task<string> GetPodFileAsync(string namespaceName, string podName, string fileName)
         {
             Console.WriteLine($"Start reading log file {fileName} in pod {podName} within namespace {namespaceName}");
