@@ -34,6 +34,7 @@ namespace Kudu.Services.Diagnostics
 
             //var logFiles = k8seClient.ListPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/").Result;
             var logFile = "";
+            var result = "";
             foreach (var pod in pods)
             {
                 List<string> logFiles = k8seClient.ListPodFileAsync(appNamespace, pod.Name, "/var/log/containers/").Result.Split('\n').ToList();
@@ -48,18 +49,14 @@ namespace Kudu.Services.Diagnostics
                 }
                 if (!string.IsNullOrEmpty(logFile))
                 {
+                    result = await k8seClient.GetPodFileAsync(appNamespace, pod.Name, "/var/log/containers/" + logFile);
                     break;
                 }
             }
 
-            var result = "";
             if (string.IsNullOrEmpty(logFile))
             {
                 result = "No log file found";
-            }
-            else
-            {
-                result = await k8seClient.GetPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/" + logFile);
             }
             return Ok(result);
         }
@@ -89,6 +86,7 @@ namespace Kudu.Services.Diagnostics
 
             //var logFiles = k8seClient.ListPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/").Result;
             var logFile = "";
+            var result = "";
             foreach (var pod in pods)
             {
                 List<string> logFiles = k8seClient.ListPodFileAsync(appNamespace, pod.Name, "/var/log/containers/").Result.Split('\n').ToList();
@@ -107,18 +105,14 @@ namespace Kudu.Services.Diagnostics
                 }
                 if (!string.IsNullOrEmpty(logFile))
                 {
+                    result = await k8seClient.GetPodFileAsync(appNamespace, pod.Name, "/var/log/containers/" + logFile);
                     break;
                 }
             }
 
-            var result = "";
             if (string.IsNullOrEmpty(logFile))
             {
                 result = "No log file found";
-            }
-            else
-            {
-                result = await k8seClient.GetPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/" + logFile);
             }
 
             return Ok(result);
@@ -150,6 +144,7 @@ namespace Kudu.Services.Diagnostics
 
             //var logFiles = k8seClient.ListPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/").Result;
             var logFile = "";
+            var result = "";
             foreach (var pod in pods)
             {
                 List<string> logFiles = k8seClient.ListPodFileAsync(appNamespace, pod.Name, "/var/log/containers/").Result.Split('\n').ToList();
@@ -167,18 +162,14 @@ namespace Kudu.Services.Diagnostics
                 }
                 if (!string.IsNullOrEmpty(logFile))
                 {
+                    result = await k8seClient.GetPodFileAsync(appNamespace, pod.Name, "/var/log/containers/" + logFile);
                     break;
                 }
             }
             
-            var result = "";
             if (string.IsNullOrEmpty(logFile))
             {
                 result = "No log file found";
-            }
-            else
-            {
-                result = await k8seClient.GetPodFileAsync(appNamespace, pods[instance].Name, "/var/log/containers/" + logFile);
             }
             return Ok(result);
         }
