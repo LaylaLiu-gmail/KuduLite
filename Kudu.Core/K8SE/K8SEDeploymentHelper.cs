@@ -169,7 +169,25 @@ namespace Kudu.Core.K8SE
                 // K8SE TODO: move this to resource map
                 throw new InvalidOperationException("Couldn't recognize AppName");
             }
+            Console.WriteLine($"Get App name: {appName}");
             return appName;
+        }
+
+        public static string GetExtensionName(HttpContext context)
+        {
+            var extensionName = System.Environment.GetEnvironmentVariable("POD_DEPLOYMENT_NAME");
+            if (string.IsNullOrEmpty(extensionName))
+            {
+                extensionName = "zuh3-appservice-extension-k8se-build-service";
+                Console.WriteLine($"Not found env var POD_DEPLOYMENT_NAME. Default to {extensionName}");
+            }
+
+            List<string> elements = extensionName.Split('-').ToList();
+            var extensionElements = elements.GetRange(0, elements.Count - 2);
+
+            extensionName = String.Join("-", extensionElements);
+            Console.WriteLine($"Extension name: {extensionName}");
+            return extensionName;
         }
 
         public static string GetAppKind(HttpContext context)
@@ -189,7 +207,12 @@ namespace Kudu.Core.K8SE
 
         public static string GetAppNamespace(HttpContext context)
         {
-            var appNamepace = context.Request.Headers["K8SE_APP_NAMESPACE"].ToString();
+            var appNamepace = System.Environment.GetEnvironmentVariable("K8SE_APPS_NAMESPACE");
+            if (string.IsNullOrEmpty(appNamepace))
+            {
+                appNamepace = "appservice-ns";
+                Console.WriteLine($"Not found Env variable K8SE_APPS_NAMESPACE. Default to {appNamepace}.");
+            }
             return appNamepace;
         }
 
