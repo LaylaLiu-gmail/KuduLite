@@ -105,9 +105,9 @@ namespace Kudu.Services.Diagnostics
             using var k8seClient = new K8SEClient();
             /*
             appNamespace = "appservice-ns";
-            
-            logProcessorName = "zuharc-eastus-appservice-extension-k8se-log-processor";*/
+            logProcessorName = "zuharc-eastus-appservice-extension-k8se-log-processor";
             appName = "zuh3-site";
+            */
             var pods = k8seClient.GetPodsForDeamonSet(appNamespace, logProcessorName);
             if (pods == null || pods.Count == 0)
             {
