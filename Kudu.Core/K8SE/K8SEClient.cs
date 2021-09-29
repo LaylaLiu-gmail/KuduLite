@@ -77,7 +77,6 @@ namespace Kudu.Core.K8SE
 
         public async Task KillPodProcessAsync(string namespaceName, string podName, string pid)
         {
-            Console.WriteLine($"Start reading log file {fileName} in pod {podName} within namespace {namespaceName}");
             var command = new List<string>()
             {
                 "kill",
@@ -89,6 +88,7 @@ namespace Kudu.Core.K8SE
 
         public async Task<string> GetPodFileAsync(string namespaceName, string podName, string fileName)
         {
+            Console.WriteLine($"Start reading log file {fileName} in pod {podName} within namespace {namespaceName}");
             var command = new List<string>()
             {
                 "cat",
