@@ -266,6 +266,14 @@ var Instance = (function () {
         configurable: true
     });
 
+    Object.defineProperty(Instance.prototype, "Status", {
+        get: function () {
+            return this._json.status;
+        },
+        enumerable: false,
+        configurable: true
+    });
+
     Object.defineProperty(Instance.prototype, "HostIpAddress", {
         get: function () {
             return this._json.hostIpAddress;
@@ -296,15 +304,37 @@ var Instance = (function () {
 
         tr.appendChild(Utilities.ToTd(this.Name));
         tr.appendChild(Utilities.ToTd(this.IpAddress));
+        tr.appendChild(Utilities.ToTd(this.Status));
         tr.appendChild(Utilities.ToTd(this.HostIpAddress));
         tr.appendChild(Utilities.ToTd(this.NodeName));
         tr.appendChild(Utilities.ToTd(this.StartTime));
 
-        var link = document.createElement('a');
-        link.textContent = "View Processes"
-        link.href = `javascript:processExplorerSetupAsync('${this.Name}');`;
-        tr.appendChild(Utilities.ToTd(link));
+        var actions = [];
+        var viewProcess = document.createElement('a');
+        viewProcess.textContent = "View Processes"
+        viewProcess.href = `javascript:processExplorerSetupAsync('${this.Name}');`;
+        actions.push(viewProcess);
 
+        var ssh = document.createElement('a');
+        ssh.textContent = "SSH";
+        ssh.href = `/instances/${this.Name}/webssh/host`;
+        actions.push(ssh);
+
+        var restartPod = document.createElement('a');
+        restartPod.textContent = "Restart";
+        restartPod.href = `javascript:restartPodAsync('${this.Name}');`;
+        actions.push(restartPod);
+
+        var actionCol = document.createElement('ul');
+        actionCol.style = "list-style-type: none; padding-left:0;";
+        for (var i = 0; i < actions.length; i++) {
+            var col = document.createElement('li');
+            col.appendChild(actions[i]);
+
+            actionCol.appendChild(col);
+        }
+
+        tr.appendChild(Utilities.ToTd(actionCol));
         return $(tr);
     };
 
@@ -685,6 +715,15 @@ function getInstancesAsync() {
         }
 
         processExplorerSetupAsync(defaultInstanceName);
+    });
+}
+
+function restartPodAsync(podName) {
+    $.ajax({
+        url: `api/instances/${podName}/restart`,
+        type: "PUT"
+    }).always(() => {
+        location.reload();
     });
 }
 
