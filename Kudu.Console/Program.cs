@@ -407,12 +407,17 @@ namespace Kudu.Console
             // Provide a way to override Kudu bin path, to resolve issue where we can not find the right Kudu bin path when running on mono
             // CORE TODO I don't think this is needed anymore? This env var is not used anywhere but here.
             string binPath = System.Environment.GetEnvironmentVariable("SCM_BIN_PATH");
+
+            System.Console.WriteLine($"binPath 1 {binPath}");
             if (string.IsNullOrWhiteSpace(binPath))
             {
                 // CORE TODO Double check. Process.GetCurrentProcess() always gets the dotnet.exe process,
                 // so changed to Assembly.GetEntryAssembly().Location
                 binPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             }
+
+            System.Console.WriteLine($"Assembly location: {Assembly.GetEntryAssembly().Location}");
+            System.Console.WriteLine($"binPath 2 {binPath}");
 
             // CORE TODO Handing in a null IHttpContextAccessor (and KuduConsoleFullPath) again
             var env = new Kudu.Core.Environment(root,
